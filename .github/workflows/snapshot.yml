@@ -1,0 +1,31 @@
+name: Aggiorna Snapshot Webcam
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  grab-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Scarica il codice del repository
+        uses: actions/checkout@v4
+
+      - name: Installa FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Estrai fotogramma JPEG da RTSP
+        run: |
+          ffmpeg -rtsp_transport tcp -i "rtsp://mnjm:f48an4@88.147.30.110:554" -vframes 1 snapshot.jpg -y
+
+      - name: Salva e sovrascrivi l'immagine su GitHub
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add snapshot.jpg
+          git commit -m "Aggiornamento snapshot.jpg [skip ci]" || exit 0
+          git push
