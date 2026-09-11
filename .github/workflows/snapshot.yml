@@ -2,8 +2,11 @@ name: Aggiorna Snapshot Webcam
 
 on:
   schedule:
-    - cron: '*/10 * * * *' # Si avvia automaticamente ogni 10 minuti
+    - cron: '*/10 * * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 concurrency:
   group: webcam-snapshot
