@@ -2,9 +2,12 @@ name: Aggiorna Snapshot Webcam
 
 on:
   schedule:
-    # Si avvia automaticamente ogni 5 minuti (frequenza minima dei server GitHub)
-    - cron: '*/5 * * * *'
-  workflow_dispatch: # Permette l'avvio manuale dalla scheda Actions
+    - cron: '*/10 * * * *' # Si avvia automaticamente ogni 10 minuti
+  workflow_dispatch:
+
+concurrency:
+  group: webcam-snapshot
+  cancel-in-progress: true
 
 jobs:
   grab-and-publish:
@@ -19,14 +22,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg
 
-      - name: Estrai fotogramma ogni minuto
+      - name: Estrai fotogramma JPEG da RTSP
         run: |
-          for i in {1..5}; do
-            ffmpeg -rtsp_transport tcp -i "rtsp://mnjm:f48an4@88.147.30.110:554" -vframes 1 snapshot.jpg -y
-            git config --global user.name "github-actions[bot]"
-            git config --global user.email "github-actions[bot]@users.noreply.github.com"
-            git add snapshot.jpg
-            git commit -m "Update snapshot [skip ci]" || true
-            git push || true
-            sleep 60
-          done
+          ffmpeg -rtsp_transport tcp -i "rtsp://mnjm:f48an4@88.147.30.110:554" -vframes 1 snapshot.jpg -y
+
+      - name: Forza l'invio dell'immagine su GitHub
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add snapshot.jpg
+          git commit -m "Aggiornamento snapshot.jpg [skip ci]" || exit 0
+          git pull --rebase origin main
+          git push origin main
